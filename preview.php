@@ -7,6 +7,7 @@
  */
 
 include_once "preview_cron.php";
+include 'preview_settings.php';
 
 function change_preview_link($link)
 {
@@ -15,7 +16,8 @@ function change_preview_link($link)
 
     $token = bin2hex(random_bytes(32));
 
-    $url = "http://localhost:5000/preview/{$token}"; // todo get this from settings
+    $url_from_option = get_option('frontend_url_field');
+    $url = "{$url_from_option}/{$token}";
 
     $post_id = get_the_ID();
 
@@ -114,3 +116,14 @@ add_action('rest_api_init', function () {
     ));
 });
 
+
+add_filter('plugin_action_links_'.plugin_basename(__FILE__), 'add_plugin_page_settings_link');
+
+function add_plugin_page_settings_link ($links)
+{
+    $links = array_merge( $links, array(
+        '<a href="' . esc_url( admin_url( '/admin.php?page=studio24_preview' ) ) . '">' . __( 'Settings', 'textdomain' ) . '</a>'
+    ) );
+
+    return $links;
+}
