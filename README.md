@@ -35,24 +35,24 @@ You can set the time for deletion of the tokens in hours. Standard is 1 hour.
 
 Once you click on 'Preview' you will automatically be redirected to the frontend with a get parameter.
 
-	- myfronted.org.uk/dedicatedroute?token=5bdwq...
+	myfronted.org.uk/dedicatedroute?token=5bdwq...
 
 **Note**: We advice to use a dedicated route in your frontend that expects preview data.
 
 Use this token to call te backend api to get a post. The following events can happen when you call:
 	
-	- If you have send the wrong token to the api you will get a 404 Token_Not_found response.
+	If you have send the wrong token to the api you will get a 404 Token_Not_found response.
 
-	- If the post has not been found, a 404 Post_Not_Found will be returned.
+	If the post has not been found, a 404 Post_Not_Found will be returned.
 
-	- If the post has no revisions yet, the post itself will be returned.
+	If the post has no revisions yet, the post itself will be returned.
 
-	- If the post has multiple revisions. note that only the last revision will be returned.
+	If the post has multiple revisions. note that only the last revision will be returned.
 
 ## Routing
 
 A new route will be available in the REST API. This will be the route to which your frontend should be calling to get the preview data.
 	
-	- wp-json/preview-studio-24/v1/{token_id}
+	wp-json/preview-studio-24/v1/{token_id}
 
 *Note: Once you call this api, the token will be deleted.*
