@@ -7,6 +7,8 @@
  * @throws Exception
  */
 
+include 'preview_settings.php';
+
 function change_preview_link($link)
 {
     global $wpdb;
