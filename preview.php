@@ -16,7 +16,8 @@ function change_preview_link($link)
 
     $token = bin2hex(random_bytes(32));
 
-    $url = "http://localhost:5000/preview/{$token}"; // todo get this from settings
+    $url_from_option = get_option('frontend_url_field');
+    $url = "{$url_from_option}/{$token}";
 
     $post_id = get_the_ID();
 

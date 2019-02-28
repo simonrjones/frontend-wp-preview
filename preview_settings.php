@@ -1,6 +1,4 @@
 <?php
-
-
 add_action( 'admin_menu','create_plugin_settings_page' );
 
 function create_plugin_settings_page(){
@@ -12,7 +10,6 @@ function create_plugin_settings_page(){
     $icon = 'dashicons-admin-plugins';
     $position = 100;
 
-//    add_submenu_page( 'options-general.php', $page_title, $menu_title, $capability, $slug, $callback );
     add_menu_page($page_title, $menu_title, $capability, $slug, $callback, $icon, $position);
 }
 
@@ -49,10 +46,10 @@ add_action('admin_init', 'setup_fields');
 
 function setup_fields(){
     add_settings_field('frontend_url_field', 'URL', 'field_callback', 'studio24_preview', 'frontend_url_section');
-
+    register_setting( 'studio24_preview', 'frontend_url_field');
 }
 
 function field_callback($arguments){
     echo '<input name="frontend_url_field" id="frontend_url_field" type="text" value="' . get_option( 'frontend_url_field' ) . '" />';
-    register_setting( 'studio24_preview', 'frontend_url_field');
+
 }
