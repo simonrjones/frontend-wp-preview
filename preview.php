@@ -123,3 +123,14 @@ add_filter('the_preview', 'do_something');
 add_filter('preview_post_link', 'change_preview_link');
 
 register_deactivation_hook(__FILE__, "delete_token_table");
+
+add_filter('plugin_action_links_'.plugin_basename(__FILE__), 'add_plugin_page_settings_link');
+
+function add_plugin_page_settings_link ($links)
+{
+    $links = array_merge( $links, array(
+        '<a href="' . esc_url( admin_url( '/admin.php?page=studio24_preview' ) ) . '">' . __( 'Settings', 'textdomain' ) . '</a>'
+    ) );
+
+    return $links;
+}

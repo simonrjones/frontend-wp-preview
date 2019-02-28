@@ -1,15 +1,5 @@
 <?php
 
-add_filter('plugin_action_links_'.plugin_basename(__FILE__), 'add_plugin_page_settings_link');
-
-function add_plugin_page_settings_link ($links) {
-
-    $links = array_merge( $links, array(
-        '<a href="' . esc_url( admin_url( '/admin.php?page=studio24_preview' ) ) . '">' . __( 'Settings', 'textdomain' ) . '</a>'
-    ) );
-
-    return $links;
-}
 
 add_action( 'admin_menu','create_plugin_settings_page' );
 
@@ -30,7 +20,7 @@ function plugin_settings_page_content(){
     ?>
     <div class="wrap">
         <h2>Studio 24 - Preview Plugin</h2>
-        <form method="post" actions="options.php">
+        <form method="post" action="options.php">
             <?php
             settings_fields('studio24_preview');
             do_settings_sections('studio24_preview');
@@ -44,17 +34,25 @@ function plugin_settings_page_content(){
 add_action('admin_init', 'setup_sections');
 
 function setup_sections(){
-    add_settings_section('frontend_url_section', 'Setup frontend URL', 'setup_fields', 'studio24_preview');
+    add_settings_section('frontend_url_section', 'Setup frontend URL', 'section_callback', 'studio24_preview');
 }
 
-function setup_fields($arguments){
-    add_settings_field('frontend_url_field', 'Frontend URL',
-        'field_callback', 'studio24_preview', 'frontend_url_section');
+function section_callback($arguments){
+    switch($arguments['id']){
+        case 'frontend_url_section':
+            echo 'Here you can change the link that the preview page should redirect to.';
+            break;
+    }
 }
 
-//add_action( 'admin_init', 'setup_fields' );
+add_action('admin_init', 'setup_fields');
 
-function field_callback(){
+function setup_fields(){
+    add_settings_field('frontend_url_field', 'URL', 'field_callback', 'studio24_preview', 'frontend_url_section');
+
+}
+
+function field_callback($arguments){
     echo '<input name="frontend_url_field" id="frontend_url_field" type="text" value="' . get_option( 'frontend_url_field' ) . '" />';
-//    register_setting( 'studio24_preview', 'frontend_url_field' );
+    register_setting( 'studio24_preview', 'frontend_url_field');
 }
