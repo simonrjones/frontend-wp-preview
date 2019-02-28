@@ -10,6 +10,7 @@
 function change_preview_link($link)
 {
     global $wpdb;
+    global $post;
 
     $token = bin2hex(random_bytes(32));
 
@@ -24,12 +25,11 @@ function change_preview_link($link)
     ));
 
     $args = array(
-        'token' => $token
+        "post_type" => $post->post_type
     );
 
-    return $url;
+    return add_query_arg($args, $url);
 }
-
 
 function get_latest_revision($request)
 {
@@ -44,6 +44,7 @@ function get_latest_revision($request)
     if (count($parent_post_id) === 0) {
         return new WP_Error( 'token_not_found', 'Invalid token id', array( 'status' => 404 ) );
     } else {
+        // Delete token when fetched.
         $wpdb->delete("{$wpdb->prefix}studio24_preview_tokens", array(
             "token_id" => $token
         ));
