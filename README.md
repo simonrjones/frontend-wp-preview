@@ -1,9 +1,9 @@
-## What does this plugin do ##
+## What does this plugin do
 
 This plugin will make it possible to preview the posts/custom posts you 
 are working on, on your decoupled frontend website.
 
-## Activation ##
+## Activation
 
 When you activate the plugin, a table will be generated:
 	 
@@ -19,24 +19,27 @@ The table consists of 3 columns:
 
 A cronjob will also be activated to remove any tokens in the table every hour. This means that once you click preview, but for any reason don't call the api the token will be available for 1 hour.
 
-## Deactivation ##
+## Deactivation
 
 On deactivation this table with all it's contents will be deleted.
-*Remember: You will no longer be able to get previews on your frontend*
 
-## Settings ##
+**Remember**: You will no longer be able to get previews on your frontend
+
+## Settings
 
 You need to set the url on which *frontend* application you want to preview your posts.
 
-You can set the time for deletion of the tokens in hours. Standard is 1 hour
-.
-## Fetching the preview ##
+You can set the time for deletion of the tokens in hours. Standard is 1 hour.
+
+## Fetching the preview
 
 Once you click on 'Preview' you will automatically be redirected to the frontend with a get parameter.
 
-	- myfronted.org.uk/token=5bdwq...&preview=true
+	- myfronted.org.uk/dedicatedroute?token=5bdwq...
 
-Use this token to call te backend api to get a post. The following events can hapen when you call:
+**Note**: We advice to use a dedicated route in your frontend that expects preview data.
+
+Use this token to call te backend api to get a post. The following events can happen when you call:
 	
 	- If you have send the wrong token to the api you will get a 404 Token_Not_found response.
 
@@ -46,7 +49,7 @@ Use this token to call te backend api to get a post. The following events can ha
 
 	- If the post has multiple revisions. note that only the last revision will be returned.
 
-## Routing ##
+## Routing
 
 A new route will be available in the REST API. This will be the route to which your frontend should be calling to get the preview data.
 	
