@@ -4,8 +4,9 @@
  * Description: This plugin makes it possible to preview changes in a decoupled environment.
  * Author: Brian Dendauw, Ben De Boevere
  * Version: 0.0.1
- * @throws Exception
  */
+
+include_once "preview_cron.php";
 
 function change_preview_link($link)
 {
@@ -70,30 +71,7 @@ function get_latest_revision($request)
     }
 }
 
-
-add_action('rest_api_init', function () {
-    register_rest_route('preview-studio-24/v1', '(?P<token>[\d\w]+)', array(
-        'methods' => 'GET',
-        'callback' => 'get_latest_revision',
-        'args' => ['token']
-    ));
-});
-
-
-function clean_up_tokens($time) {
-    global $wpdb;
-    $tokens = $wpdb->get_results("select * from {$wpdb->prefix}studio24_preview_tokens");
-    foreach ($tokens as $token) {
-        $diff = date("H", $time-$token->creation_time);
-        if ($diff >= 1) { // todo setting, now 1 hour
-            $wpdb->delete("{$wpdb->prefix}studio24_preview_tokens", array(
-                "token_id" => $token->token_id
-            ));
-        }
-    }
-}
-
-function create_token_table() {
+function setup_preview_db_cron() {
     global $wpdb;
     global $charset_collate;
     $query = "CREATE TABLE IF NOT EXISTS " . $wpdb->prefix . "studio24_preview_tokens (
@@ -105,19 +83,34 @@ function create_token_table() {
     require_once(ABSPATH . "wp-admin/includes/upgrade.php");
     dbDelta($query);
 
-    wp_schedule_event(time(), 'hourly', 'clean_up_tokens', array(time()));
+    if( !wp_next_scheduled( 'cleanup_tokens_in_db' ) ) {
+        wp_schedule_event(time(), 'hourly', 'cleanup_tokens_in_db' );
+    }
 }
 
-function delete_token_table() {
+function cleanup_preview_after_deactivation() {
     global $wpdb;
     $query = "DROP TABLE IF EXISTS " . $wpdb->prefix . "studio24_preview_tokens;";
     $wpdb->query($query);
+    // find out when the last event was scheduled
+    $timestamp = wp_next_scheduled ('cleanup_tokens_in_db');
+    // unschedule previous event if any
+    wp_unschedule_event ($timestamp, 'cleanup_tokens_in_db');
 }
 
-register_activation_hook( __FILE__, "create_token_table" );
+register_activation_hook( __FILE__, "setup_preview_db_cron" );
 
 add_filter('the_preview', 'do_something');
 
 add_filter('preview_post_link', 'change_preview_link');
 
-register_deactivation_hook(__FILE__, "delete_token_table");
+register_deactivation_hook(__FILE__, "cleanup_preview_after_deactivation");
+
+add_action('rest_api_init', function () {
+    register_rest_route('preview-studio-24/v1', '(?P<token>[\d\w]+)', array(
+        'methods' => 'GET',
+        'callback' => 'get_latest_revision',
+        'args' => ['token']
+    ));
+});
+
