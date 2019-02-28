@@ -13,7 +13,7 @@ function change_preview_link($link)
 
     $token = bin2hex(random_bytes(32));
 
-    $domain = "http://localhost:5000/"; // todo get this from settings
+    $url = "http://localhost:5000/preview/{$token}"; // todo get this from settings
 
     $post_id = get_the_ID();
 
@@ -24,11 +24,10 @@ function change_preview_link($link)
     ));
 
     $args = array(
-        'token' => $token,
-        'preview' => 'true'
+        'token' => $token
     );
 
-    return add_query_arg($args, $domain);
+    return $url;
 }
 
 
