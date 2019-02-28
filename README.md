@@ -10,12 +10,12 @@ When you activate the plugin, a table will be generated:
 	 wpprefix_studio24_preview_tokens
 
 The table consists of 3 columns:
-	- token_id
-		- A generated token using php random_bytes function
-	- parent_post_id
-		- The parent post ID
-	- creation_time
-		- This will contain the time the 'preview' was created.
+- token_id
+	- A generated token using php random_bytes function
+- parent_post_id
+	- The parent post ID
+- creation_time
+	- This will contain the time the 'preview' was created.
 
 A cronjob will also be activated to remove any tokens in the table every hour. This means that once you click preview, but for any reason don't call the api the token will be available for 1 hour.
 
