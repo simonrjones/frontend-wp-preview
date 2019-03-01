@@ -50,6 +50,6 @@ function setup_fields(){
 }
 
 function field_callback($arguments){
-    echo '<input name="frontend_url_field" id="frontend_url_field" type="text" value="' . get_option( 'frontend_url_field' ) . '" />';
+    echo '<input name="frontend_url_field" id="frontend_url_field" type="url" value="' . get_option( 'frontend_url_field' ) . '" />';
 
 }

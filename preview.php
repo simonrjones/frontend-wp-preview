@@ -102,8 +102,6 @@ function cleanup_preview_after_deactivation() {
 
 register_activation_hook( __FILE__, "setup_preview_db_cron" );
 
-add_filter('the_preview', 'do_something');
-
 add_filter('preview_post_link', 'change_preview_link');
 
 register_deactivation_hook(__FILE__, "cleanup_preview_after_deactivation");
