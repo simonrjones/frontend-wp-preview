@@ -98,29 +98,20 @@ function add_plugin_page_settings_link( $links ) {
 	return $links;
 }
 
-function sidebar_plugin_register() {
-	wp_register_script(
-		'preview-sidebar',
-		plugins_url( 'preview.js', __FILE__ ),
-		array( 'wp-plugins', 'wp-edit-post', 'wp-element', 'wp-components' )
-	);
-}
-
-add_action( 'init', 'sidebar_plugin_register' );
-
-function sidebar_plugin_script_enqueue() {
-	wp_enqueue_script( 'preview-sidebar' );
-}
-
-add_action( 'enqueue_block_editor_assets', 'sidebar_plugin_script_enqueue' );
-
 add_action( 'in_admin_header', 'change_preview_link' );
 
 add_filter( 'preview_post_link', 'change_preview_link' );
 
+
+function updatePreviewToken() {
+	change_preview_link();
+}
+
 function change_preview_link() {
-	global $wpdb;
+    global $wpdb;
 	global $post;
+	global $pagenow;
+
 	$token = bin2hex( random_bytes( 32 ) );
 
 	$url_from_option = get_option( 'frontend_url_field' );
@@ -134,18 +125,18 @@ function change_preview_link() {
 		"creation_time"  => time()
 	) );
 
-	$args   = array(
+	$args = array(
 		"post_type" => $post->post_type
 	);
 
-	$isEdit = ( isset( $_GET['action'] ) && $_GET['action'] === 'edit' ) ? 1 : 0;
+	$isEdit = ( (isset( $_GET['action'] ) && $_GET['action'] === 'edit') || in_array( $pagenow, array( 'post.php', 'post-new.php' ) ) ) ? 1 : 0;
 	if ( $isEdit ) {
 		?>
         <script>
             console.log(<?php echo $isEdit ?>);
             if (<?php echo $isEdit ?>) {
                 console.log("Updating the token");
-                addPreviewSidebar("<?php echo $token; ?>", "<?php echo $url; ?>");
+                addPreviewSidebar("<?php echo esc_url( admin_url( '/admin.php?page=studio24_preview' ) ); ?>", "<?php echo $url; ?>", "<?php echo $url_from_option; ?>");
             }
         </script>
 		<?php
@@ -153,3 +144,37 @@ function change_preview_link() {
 
 	return $url;
 }
+
+add_action( "save_post", "updatePreviewToken" );
+
+
+function preview_sidebar_plugin_register() {
+	wp_register_script(
+		'preview-sidebar-js',
+		plugins_url( 'preview-sidebar.js', __FILE__ ),
+		array(
+			'wp-plugins',
+			'wp-edit-post',
+			'wp-element',
+			'wp-components'
+		)
+	);
+	wp_register_style(
+		'preview-sidebar-css',
+		plugins_url( 'preview-sidebar.css', __FILE__ )
+	);
+}
+
+add_action( 'init', 'preview_sidebar_plugin_register' );
+
+function preview_sidebar_plugin_style_enqueue() {
+	wp_enqueue_style( 'preview-sidebar-css' );
+}
+
+add_action( 'enqueue_block_assets', 'preview_sidebar_plugin_style_enqueue' );
+
+function preview_sidebar_plugin_script_enqueue() {
+	wp_enqueue_script( 'preview-sidebar-js' );
+}
+
+add_action( 'enqueue_block_editor_assets', 'preview_sidebar_plugin_script_enqueue' );

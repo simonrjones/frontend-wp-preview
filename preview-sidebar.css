@@ -1,0 +1,27 @@
+
+.preview-plugin-sidebar-link-content {
+    text-align: center;
+}
+
+#preview-sidebar-link {
+    display: inline-block;
+    margin: 1% 0 5% 0;
+    font-size: 1.2em;
+}
+
+.preview-sidebar-warning {
+    padding: 2% 10%;
+    font-size: 0.8em;
+    background-color: rgba(255, 103, 0, 0.4);
+}
+
+.preview-sidebar-header {
+    font-size: 1.1em;
+    margin: 2% 0 2% 5%;
+    text-decoration: underline;
+    text-align: left;
+}
+
+.preview-plugin-sidebar-info-content {
+    padding: 3%;
+}

@@ -15,6 +15,17 @@ function create_plugin_settings_page(){
 
 function plugin_settings_page_content(){
     ?>
+    <style>
+        .wrap, table.form-table th, table.form-table td, th {
+            text-align: center;
+        }
+        table.form-table input {
+            width: 50%;
+        }
+        p.submit {
+            text-align: center;
+        }
+    </style>
     <div class="wrap">
         <h2>Studio 24 - Preview Plugin</h2>
         <form method="post" action="options.php">
