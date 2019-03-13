@@ -9,119 +9,147 @@
 include_once "preview_cron.php";
 include 'preview_settings.php';
 
-function change_preview_link($link)
-{
-    global $wpdb;
-    global $post;
+function get_latest_revision( $request ) {
+	$token = $request["token"];
 
-    $token = bin2hex(random_bytes(32));
+	global $wpdb;
 
-    $url_from_option = get_option('frontend_url_field');
-    $url = "{$url_from_option}/{$token}";
+	$parent_post_id = $wpdb->get_results( $wpdb->prepare(
+		"select parent_post_id from {$wpdb->prefix}studio24_preview_tokens where token_id = %s", $token
+	), OBJECT );
 
-    $post_id = get_the_ID();
+	if ( count( $parent_post_id ) === 0 ) {
+		return new WP_Error( 'token_not_found', 'Invalid token id', array( 'status' => 404 ) );
+	} else {
+		// Delete token when fetched.
+//		$wpdb->delete( "{$wpdb->prefix}studio24_preview_tokens", array(
+//			"token_id" => $token
+//		) );
+	}
 
-    $wpdb->insert($wpdb->prefix . "studio24_preview_tokens", array(
-        "token_id" => $token,
-        "parent_post_id" => $post_id,
-        "creation_time" => time()
-    ));
+	$parent_post_id = end( $parent_post_id )->parent_post_id;
 
-    $args = array(
-        "post_type" => $post->post_type
-    );
+	$revisions = $wpdb->get_results( $wpdb->prepare(
+		"select ID from {$wpdb->prefix}posts where post_parent = %d and post_type = 'revision'", intval( $parent_post_id )
+	), OBJECT );
 
-    return add_query_arg($args, $url);
-}
+	if ( count( $revisions ) === 0 ) {
+		$post = get_post( $parent_post_id );
+		if ( $post ) {
+			return $post;
+		} else {
+			return new WP_Error( 'post_not_found', 'Invalid post id', array( 'status' => 404 ) );
+		}
+	} else {
+		$last_revision = end( $revisions );
+		$last_revision = get_post( $last_revision->ID );
 
-function get_latest_revision($request)
-{
-    $token = $request["token"];
-
-    global $wpdb;
-
-    $parent_post_id = $wpdb->get_results($wpdb->prepare(
-        "select parent_post_id from {$wpdb->prefix}studio24_preview_tokens where token_id = %s", $token
-    ), OBJECT);
-
-    if (count($parent_post_id) === 0) {
-        return new WP_Error( 'token_not_found', 'Invalid token id', array( 'status' => 404 ) );
-    } else {
-        // Delete token when fetched.
-        $wpdb->delete("{$wpdb->prefix}studio24_preview_tokens", array(
-            "token_id" => $token
-        ));
-    }
-
-    $parent_post_id = end($parent_post_id)->parent_post_id;
-
-    $revisions = $wpdb->get_results($wpdb->prepare(
-        "select ID from {$wpdb->prefix}posts where post_parent = %d and post_type = 'revision'", intval($parent_post_id)
-    ), OBJECT);
-
-    if (count($revisions) === 0) {
-        $post = get_post($parent_post_id);
-        if ($post) {
-            return $post;
-        } else {
-            return new WP_Error( 'post_not_found', 'Invalid post id', array( 'status' => 404 ) );
-        }
-    } else {
-        $last_revision = end($revisions);
-        $last_revision = get_post($last_revision->ID);
-        return $last_revision;
-    }
+		return $last_revision;
+	}
 }
 
 function setup_preview_db_cron() {
-    global $wpdb;
-    global $charset_collate;
-    $query = "CREATE TABLE IF NOT EXISTS " . $wpdb->prefix . "studio24_preview_tokens (
+	global $wpdb;
+	global $charset_collate;
+	$query = "CREATE TABLE IF NOT EXISTS " . $wpdb->prefix . "studio24_preview_tokens (
         token_id VARCHAR(255) NOT  NULL,
         parent_post_id INT NOT NULL,
         creation_time VARCHAR(25) NOT NULL,
         PRIMARY KEY  (token_id)
     ) $charset_collate;";
-    require_once(ABSPATH . "wp-admin/includes/upgrade.php");
-    dbDelta($query);
+	require_once( ABSPATH . "wp-admin/includes/upgrade.php" );
+	dbDelta( $query );
 
-    if( !wp_next_scheduled( 'cleanup_tokens_in_db' ) ) {
-        wp_schedule_event(time(), 'hourly', 'cleanup_tokens_in_db' );
-    }
+	if ( ! wp_next_scheduled( 'cleanup_tokens_in_db' ) ) {
+		wp_schedule_event( time(), 'hourly', 'cleanup_tokens_in_db' );
+	}
 }
 
 function cleanup_preview_after_deactivation() {
-    global $wpdb;
-    $query = "DROP TABLE IF EXISTS " . $wpdb->prefix . "studio24_preview_tokens;";
-    $wpdb->query($query);
-    // find out when the last event was scheduled
-    $timestamp = wp_next_scheduled ('cleanup_tokens_in_db');
-    // unschedule previous event if any
-    wp_unschedule_event ($timestamp, 'cleanup_tokens_in_db');
+	global $wpdb;
+	$query = "DROP TABLE IF EXISTS " . $wpdb->prefix . "studio24_preview_tokens;";
+	$wpdb->query( $query );
+	// find out when the last event was scheduled
+	$timestamp = wp_next_scheduled( 'cleanup_tokens_in_db' );
+	// unschedule previous event if any
+	wp_unschedule_event( $timestamp, 'cleanup_tokens_in_db' );
 }
 
 register_activation_hook( __FILE__, "setup_preview_db_cron" );
 
-add_filter('preview_post_link', 'change_preview_link');
+register_deactivation_hook( __FILE__, "cleanup_preview_after_deactivation" );
 
-register_deactivation_hook(__FILE__, "cleanup_preview_after_deactivation");
-
-add_action('rest_api_init', function () {
-    register_rest_route('preview-studio-24/v1', '(?P<token>[\d\w]+)', array(
-        'methods' => 'GET',
-        'callback' => 'get_latest_revision',
-        'args' => ['token']
-    ));
-});
+add_action( 'rest_api_init', function () {
+	register_rest_route( 'preview-studio-24/v1', '(?P<token>[\d\w]+)', array(
+		'methods'  => 'GET',
+		'callback' => 'get_latest_revision',
+		'args'     => [ 'token' ]
+	) );
+} );
 
 
-add_filter('plugin_action_links_'.plugin_basename(__FILE__), 'add_plugin_page_settings_link');
+add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'add_plugin_page_settings_link' );
 
-function add_plugin_page_settings_link ($links)
-{
-    $links = array_merge( $links, array(
-        '<a href="' . esc_url( admin_url( '/admin.php?page=studio24_preview' ) ) . '">' . __( 'Settings', 'textdomain' ) . '</a>'
-    ) );
+function add_plugin_page_settings_link( $links ) {
+	$links = array_merge( $links, array(
+		'<a href="' . esc_url( admin_url( '/admin.php?page=studio24_preview' ) ) . '">' . __( 'Settings', 'textdomain' ) . '</a>'
+	) );
 
-    return $links;
+	return $links;
+}
+
+function sidebar_plugin_register() {
+	wp_register_script(
+		'preview-sidebar',
+		plugins_url( 'preview.js', __FILE__ ),
+		array( 'wp-plugins', 'wp-edit-post', 'wp-element', 'wp-components' )
+	);
+}
+
+add_action( 'init', 'sidebar_plugin_register' );
+
+function sidebar_plugin_script_enqueue() {
+	wp_enqueue_script( 'preview-sidebar' );
+}
+
+add_action( 'enqueue_block_editor_assets', 'sidebar_plugin_script_enqueue' );
+
+add_action( 'in_admin_header', 'change_preview_link' );
+
+add_filter( 'preview_post_link', 'change_preview_link' );
+
+function change_preview_link() {
+	global $wpdb;
+	global $post;
+	$token = bin2hex( random_bytes( 32 ) );
+
+	$url_from_option = get_option( 'frontend_url_field' );
+	$url             = "{$url_from_option}/{$token}";
+
+	$post_id = get_the_ID();
+
+	$wpdb->insert( $wpdb->prefix . "studio24_preview_tokens", array(
+		"token_id"       => $token,
+		"parent_post_id" => $post_id,
+		"creation_time"  => time()
+	) );
+
+	$args   = array(
+		"post_type" => $post->post_type
+	);
+
+	$isEdit = ( isset( $_GET['action'] ) && $_GET['action'] === 'edit' ) ? 1 : 0;
+	if ( $isEdit ) {
+		?>
+        <script>
+            console.log(<?php echo $isEdit ?>);
+            if (<?php echo $isEdit ?>) {
+                console.log("Updating the token");
+                addPreviewSidebar("<?php echo $token; ?>", "<?php echo $url; ?>");
+            }
+        </script>
+		<?php
+	}
+
+	return $url;
 }
