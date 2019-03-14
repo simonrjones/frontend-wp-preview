@@ -7,16 +7,17 @@ function addPreviewSidebar(plugin_settings_url, previewurl, current_url) {
         var el = wp.element.createElement;
         var Link = wp.components.ExternalLink;
 
-        if (wp.plugins.getPlugin("preview-sidebar")) {
-            wp.plugins.unregisterPlugin("preview-sidebar");
+        var previously_installed = wp.plugins.getPlugin("headless-preview-sidebar");
+        if (previously_installed) {
+            wp.plugins.unregisterPlugin("headless-preview-sidebar");
         }
 
-        registerPlugin('preview-sidebar', {
+        registerPlugin('headless-preview-sidebar', {
             render: function () {
                 return el(PluginSidebar, {
-                        name: 'preview-sidebar',
+                        name: 'headless-preview-sidebar',
                         icon: 'welcome-view-site',
-                        title: 'Headless preview',
+                        title: 'Headless preview'
                     },
                     el("div",
                         {className: 'preview-plugin-sidebar-link-content'},

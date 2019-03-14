@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Preview - Studio 24
  * Description: This plugin makes it possible to preview changes in a decoupled environment.
- * Author: Brian Dendauw, Ben De Boevere
+ * Author: <a href="https://www.studio24.net">Studio 24</a>
  * Version: 0.0.1
  */
 
@@ -200,14 +200,33 @@ function preview_sidebar_plugin_script_enqueue() {
 
 add_action( 'enqueue_block_editor_assets', 'preview_sidebar_plugin_script_enqueue' );
 
-function add_headless_preview_button_to_misc_actions() {
+// register the meta box
+add_action( 'add_meta_boxes', 'my_custom_field_checkboxes' );
+function my_custom_field_checkboxes() {
+	add_meta_box(
+		'headless-preview-options-box',
+		'Headless preview',
+		'headless_preview_options_box',
+		'',         // all
+		'side',
+		'high'
+	);
+}
+
+// display the metabox
+function headless_preview_options_box() {
+
 	global $headless_preview_link;
-	$html = '<div id="major-publishing-actions" style="overflow:hidden">';
+	$html = '<div id="major-publishing-actions" style="overflow:hidden; text-align: center">';
 	$html .= '<div id="publishing-action">';
 	$html .= '<a class="preview button" target="_blank" href="' . $headless_preview_link . '" id="headless-preview">Headless preview<span class="screen-reader-text">(opens in a new tab)</span></a>';
 	$html .= '</div>';
 	$html .= '</div>';
+	$html .= "<div class=\"preview-plugin-sidebar-info-content\">";
+	$html .= "<p class=\"preview-sidebar-header\">Settings</p>";
+	$html .= "<a class=\"components-external-link\" href=\"http://localhost/wordpress/wp-admin/admin.php?page=studio24_preview\" target=\"_blank\" rel=\"external noreferrer noopener\">Plugin settings<span class=\"screen-reader-text\">(opens in a new tab)</span></a>";
+	$html .= "<p class=\"\">Current frontend url: <a class=\"components-external-link\" href=\"http://localhost:5000/preview\" target=\"_blank\" rel=\"external noreferrer noopener\">";
+	$html .= "http://localhost:5000/preview<span class=\"screen-reader-text\">(opens in a new tab)</span></a></p></div>";
 	echo $html;
 }
 
-add_action( 'post_submitbox_misc_actions', "add_headless_preview_button_to_misc_actions" );
