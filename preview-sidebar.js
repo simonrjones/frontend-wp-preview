@@ -6,7 +6,6 @@ function addPreviewSidebar(plugin_settings_url, previewurl, current_url) {
         var PluginSidebar = wp.editPost.PluginSidebar;
         var el = wp.element.createElement;
         var Link = wp.components.ExternalLink;
-        var Sandbox = wp.components.SandBox;
 
         if (wp.plugins.getPlugin("preview-sidebar")) {
             wp.plugins.unregisterPlugin("preview-sidebar");
@@ -17,7 +16,7 @@ function addPreviewSidebar(plugin_settings_url, previewurl, current_url) {
                 return el(PluginSidebar, {
                         name: 'preview-sidebar',
                         icon: 'welcome-view-site',
-                        title: 'Preview',
+                        title: 'Headless preview',
                     },
                     el("div",
                         {className: 'preview-plugin-sidebar-link-content'},

@@ -22,9 +22,9 @@ function get_latest_revision( $request ) {
 		return new WP_Error( 'token_not_found', 'Invalid token id', array( 'status' => 404 ) );
 	} else {
 		// Delete token when fetched.
-//		$wpdb->delete( "{$wpdb->prefix}studio24_preview_tokens", array(
-//			"token_id" => $token
-//		) );
+		$wpdb->delete( "{$wpdb->prefix}studio24_preview_tokens", array(
+			"token_id" => $token
+		) );
 	}
 
 	$parent_post_id = end( $parent_post_id )->parent_post_id;
@@ -108,14 +108,24 @@ function updatePreviewToken() {
 }
 
 function change_preview_link() {
-    global $wpdb;
+	global $wpdb;
 	global $post;
 	global $pagenow;
+	global $headless_preview_link;
+	$inOverview = ( in_array( $pagenow, array( "edit.php" ) ) ) ? 1 : 0;
+
+	$inEditor = ( ( isset( $_GET['action'] ) && $_GET['action'] === 'edit' ) || in_array( $pagenow, array(
+			'post.php',
+			'post-new.php'
+		) ) ) ? 1 : 0;
+	global $current_screen;
+	$isGutenbergEditor = ( ( method_exists( $current_screen, 'is_block_editor' ) && $current_screen->is_block_editor() )
+	                       || ( function_exists( 'is_gutenberg_page' ) ) && is_gutenberg_page() ) ? 1 : 0;
 
 	$token = bin2hex( random_bytes( 32 ) );
 
-	$url_from_option = get_option( 'frontend_url_field' );
-	$url             = "{$url_from_option}/{$token}";
+	$url_from_option       = get_option( 'frontend_url_field' );
+	$headless_preview_link = "{$url_from_option}/{$token}";
 
 	$post_id = get_the_ID();
 
@@ -129,20 +139,31 @@ function change_preview_link() {
 		"post_type" => $post->post_type
 	);
 
-	$isEdit = ( (isset( $_GET['action'] ) && $_GET['action'] === 'edit') || in_array( $pagenow, array( 'post.php', 'post-new.php' ) ) ) ? 1 : 0;
-	if ( $isEdit ) {
-		?>
-        <script>
-            console.log(<?php echo $isEdit ?>);
-            if (<?php echo $isEdit ?>) {
-                console.log("Updating the token");
-                addPreviewSidebar("<?php echo esc_url( admin_url( '/admin.php?page=studio24_preview' ) ); ?>", "<?php echo $url; ?>", "<?php echo $url_from_option; ?>");
-            }
-        </script>
-		<?php
-	}
+	$headless_preview_link = add_query_arg( $args, $headless_preview_link );
 
-	return $url;
+	if ( $inEditor ) {
+		if ( $isGutenbergEditor ) {
+			// create sidebar
+			?>
+            <script>
+                console.log("Updating the token || creating preview sidebar");
+                addPreviewSidebar("<?php echo esc_url( admin_url( '/admin.php?page=studio24_preview' ) ); ?>", "<?php echo $headless_preview_link; ?>", "<?php echo $url_from_option; ?>");
+            </script>
+			<?php
+		} else {
+			// adding a new button for the normal editor happens in a different hook.
+		}
+	} elseif ( $inOverview ) {
+		// add link to list
+		add_filter( 'post_row_actions', function ( $actions, $post ) {
+			global $headless_preview_link;
+			if ( get_post_status( $post ) != 'publish' ) {
+				$actions['headless-preview'] = "<a target=\"_blank\"  href='{$headless_preview_link}'>Headless preview</a>";
+			}
+
+			return $actions;
+		}, 10, 2 );
+	}
 }
 
 add_action( "save_post", "updatePreviewToken" );
@@ -178,3 +199,15 @@ function preview_sidebar_plugin_script_enqueue() {
 }
 
 add_action( 'enqueue_block_editor_assets', 'preview_sidebar_plugin_script_enqueue' );
+
+function add_headless_preview_button_to_misc_actions() {
+	global $headless_preview_link;
+	$html = '<div id="major-publishing-actions" style="overflow:hidden">';
+	$html .= '<div id="publishing-action">';
+	$html .= '<a class="preview button" target="_blank" href="' . $headless_preview_link . '" id="headless-preview">Headless preview<span class="screen-reader-text">(opens in a new tab)</span></a>';
+	$html .= '</div>';
+	$html .= '</div>';
+	echo $html;
+}
+
+add_action( 'post_submitbox_misc_actions', "add_headless_preview_button_to_misc_actions" );

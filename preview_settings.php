@@ -48,7 +48,7 @@ function setup_sections(){
 function section_callback($arguments){
     switch($arguments['id']){
         case 'frontend_url_section':
-            echo 'Here you can change the link that the preview page should redirect to.';
+            echo '<p>Here you can change the link that the preview page should redirect to.</p>';
             break;
     }
 }
