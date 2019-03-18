@@ -17,6 +17,7 @@ if ( ! class_exists( "Studio24_Preview" ) ) {
 		public function load_dependencies() {
 			require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/Studio24_Preview_Activator.php';
 			$this->activator = Studio24_Preview_Activator::getInstance();
+			require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/Studio24_Preview_Settings.php';
 			$this->settings = Studio24_Preview_Settings::getInstance();
 			require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/Studio24_Preview_Endpoints.php';
 			$this->endpoints = Studio24_Preview_Endpoints::getInstance();
