@@ -66,7 +66,7 @@ It is the **responsibility of the user** to provide the necessary functionality 
 A new route will be available in the REST API.
 You can access the data through the following url.
     
-    wp-json/preview-studio-24/v1/{token_id}
+    wp-json/preview-studio-24/v1/revision/{token_id}
 
 Once you click on 'Headless Preview' you will automatically be redirected to the frontend with get parameters.
 

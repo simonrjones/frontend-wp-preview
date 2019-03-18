@@ -6,64 +6,9 @@
  * Version: 0.0.1
  */
 
-include_once "preview_cron.php";
-include 'preview_settings.php';
-
-function get_latest_revision( $request ) {
-	$token = $request["token"];
-
-	global $wpdb;
-
-	$parent_post_id = $wpdb->get_results( $wpdb->prepare(
-		"select parent_post_id from {$wpdb->prefix}studio24_preview_tokens where token_id = %s", $token
-	), OBJECT );
-
-	if ( count( $parent_post_id ) === 0 ) {
-		return new WP_Error( 'token_not_found', 'Invalid token id', array( 'status' => 404 ) );
-	} else {
-		// Delete token when fetched.
-		$wpdb->delete( "{$wpdb->prefix}studio24_preview_tokens", array(
-			"token_id" => $token
-		) );
-	}
-
-	$parent_post_id = end( $parent_post_id )->parent_post_id;
-
-	$revisions = $wpdb->get_results( $wpdb->prepare(
-		"select ID from {$wpdb->prefix}posts where post_parent = %d and post_type = 'revision'", intval( $parent_post_id )
-	), OBJECT );
-
-	if ( count( $revisions ) === 0 ) {
-		$post = get_post( $parent_post_id );
-		if ( $post ) {
-			return $post;
-		} else {
-			return new WP_Error( 'post_not_found', 'Invalid post id', array( 'status' => 404 ) );
-		}
-	} else {
-		$last_revision = end( $revisions );
-		$last_revision = get_post( $last_revision->ID );
-
-		return $last_revision;
-	}
-}
-
-function setup_preview_db_cron() {
-	global $wpdb;
-	global $charset_collate;
-	$query = "CREATE TABLE IF NOT EXISTS " . $wpdb->prefix . "studio24_preview_tokens (
-        token_id VARCHAR(255) NOT  NULL,
-        parent_post_id INT NOT NULL,
-        creation_time VARCHAR(25) NOT NULL,
-        PRIMARY KEY  (token_id)
-    ) $charset_collate;";
-	require_once( ABSPATH . "wp-admin/includes/upgrade.php" );
-	dbDelta( $query );
-
-	if ( ! wp_next_scheduled( 'cleanup_tokens_in_db' ) ) {
-		wp_schedule_event( time(), 'hourly', 'cleanup_tokens_in_db' );
-	}
-}
+include_once "preview-cron.php";
+include_once 'preview-settings.php';
+include_once 'preview-endpoints.php';
 
 function cleanup_preview_after_deactivation() {
 	global $wpdb;
@@ -119,35 +64,41 @@ function change_preview_link() {
 			'post-new.php'
 		) ) ) ? 1 : 0;
 	global $current_screen;
-	$isGutenbergEditor = ( ( method_exists( $current_screen, 'is_block_editor' ) && $current_screen->is_block_editor() )
-	                       || ( function_exists( 'is_gutenberg_page' ) ) && is_gutenberg_page() ) ? 1 : 0;
+//	$isGutenbergEditor = ( ( method_exists( $current_screen, 'is_block_editor' ) && $current_screen->is_block_editor() )
+//	                       || ( function_exists( 'is_gutenberg_page' ) ) && is_gutenberg_page() ) ? 1 : 0;
 
-	$token = bin2hex( random_bytes( 32 ) );
+	if ( ! $inOverview && ! $inEditor ) {
+		return;
+	}
 
-	$url_from_option       = get_option( 'frontend_url_field' );
-	$headless_preview_link = "{$url_from_option}/{$token}";
+//	$token = bin2hex( random_bytes( 32 ) );
+//
+//	$url_from_option       = get_option( 'frontend_url_field' );
+//	$headless_preview_link = "{$url_from_option}/{$token}";
+//
+//	$post_id = get_the_ID();
+//
+//	$wpdb->insert( $wpdb->prefix . "studio24_preview_tokens", array(
+//		"token_id"       => $token,
+//		"parent_post_id" => $post_id,
+//		"creation_time"  => time()
+//	) );
 
-	$post_id = get_the_ID();
-
-	$wpdb->insert( $wpdb->prefix . "studio24_preview_tokens", array(
-		"token_id"       => $token,
-		"parent_post_id" => $post_id,
-		"creation_time"  => time()
-	) );
-
-	$args = array(
-		"post_type" => $post->post_type
-	);
-
-	$headless_preview_link = add_query_arg( $args, $headless_preview_link );
+//	$args = array(
+//		"post_type" => $post->post_type
+//	);
+//
+//	$headless_preview_link = add_query_arg( $args, $headless_preview_link );
 
 	if ( $inEditor ) {
+	    // other hook adds a metabox
 		if ( $isGutenbergEditor ) {
 			// create sidebar
+            // maybe not...
 			?>
             <script>
-                console.log("Updating the token || creating preview sidebar");
-                addPreviewSidebar("<?php echo esc_url( admin_url( '/admin.php?page=studio24_preview' ) ); ?>", "<?php echo $headless_preview_link; ?>", "<?php echo $url_from_option; ?>");
+                //console.log("Updating the token || creating preview sidebar");
+                //addPreviewSidebar("<?php //echo esc_url( admin_url( '/admin.php?page=studio24_preview' ) ); ?>//", "<?php //echo $headless_preview_link; ?>//", "<?php //echo $url_from_option; ?>//");
             </script>
 			<?php
 		} else {
@@ -156,11 +107,9 @@ function change_preview_link() {
 	} elseif ( $inOverview ) {
 		// add link to list
 		add_filter( 'post_row_actions', function ( $actions, $post ) {
-			global $headless_preview_link;
 			if ( get_post_status( $post ) != 'publish' ) {
-				$actions['headless-preview'] = "<a target=\"_blank\"  href='{$headless_preview_link}'>Headless preview</a>";
+				$actions['headless-preview'] = "<a target=\"_blank\"  href='" . get_new_token_url() . "'>Headless preview</a>";
 			}
-
 			return $actions;
 		}, 10, 2 );
 	}
@@ -216,17 +165,30 @@ function my_custom_field_checkboxes() {
 // display the metabox
 function headless_preview_options_box() {
 
-	global $headless_preview_link;
+	$base_url      = get_bloginfo( 'url' );
+	$front_end_url = get_option( "frontend_url_field" );
+
 	$html = '<div id="major-publishing-actions" style="overflow:hidden; text-align: center">';
 	$html .= '<div id="publishing-action">';
-	$html .= '<a class="preview button" target="_blank" href="' . $headless_preview_link . '" id="headless-preview">Headless preview<span class="screen-reader-text">(opens in a new tab)</span></a>';
-	$html .= '</div>';
-	$html .= '</div>';
-	$html .= "<div class=\"preview-plugin-sidebar-info-content\">";
-	$html .= "<p class=\"preview-sidebar-header\">Settings</p>";
-	$html .= "<a class=\"components-external-link\" href=\"http://localhost/wordpress/wp-admin/admin.php?page=studio24_preview\" target=\"_blank\" rel=\"external noreferrer noopener\">Plugin settings<span class=\"screen-reader-text\">(opens in a new tab)</span></a>";
-	$html .= "<p class=\"\">Current frontend url: <a class=\"components-external-link\" href=\"http://localhost:5000/preview\" target=\"_blank\" rel=\"external noreferrer noopener\">";
-	$html .= "http://localhost:5000/preview<span class=\"screen-reader-text\">(opens in a new tab)</span></a></p></div>";
+	$html .= '<a class="preview button" target="_blank" href="';
+	$html .= get_new_token_url();
+	$html .= 'id="headless-preview">Headless preview<span class="screen-reader-text">(opens in a new tab)</span></a>';
+	$html .= '</div></div>';
+	$html .= '<div class="preview-plugin-sidebar-info-content">';
+	$html .= '<p class="preview-sidebar-header">Settings</p>';
+	$html .= '<a class="components-external-link" href="';
+	$html .= $base_url;
+	$html .= '/wp-admin/admin.php?page=studio24_preview" target="_blank" rel="external noreferrer noopener">Plugin settings<span class="screen-reader-text">(opens in a new tab)</span></a>';
+	$html .= '<p>Current frontend url: <a class="components-external-link" href="' . $front_end_url . '" target="_blank" rel="external noreferrer noopener">';
+	$html .= $front_end_url;
+	$html .= '<span class="screen-reader-text">(opens in a new tab)</span></a></p></div>';
 	echo $html;
+}
+
+function get_new_token_url() {
+	global $post;
+	$base_url = get_bloginfo( 'url' );
+
+	return $base_url . '/wp-json/preview-studio-24/v1/new?post_id=' . $post->ID . '&post_type=' . $post->post_type;
 }
 
