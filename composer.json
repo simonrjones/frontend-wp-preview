@@ -1,0 +1,16 @@
+{
+    "name": "bdeboevere/studio24-preview",
+    "authors": [
+        {
+            "name": "DeBoevereBen",
+            "email": "ben.de.boevere@student.howest.be"
+        }
+    ],
+    "require": {},
+    "require-dev": {
+        "dealerdirect/phpcodesniffer-composer-installer": "*",
+        "object-calisthenics/phpcs-calisthenics-rules": "*",
+        "phpcompatibility/php-compatibility": "*",
+        "wp-coding-standards/wpcs": "*"
+    }
+}
