@@ -106,7 +106,7 @@ class Studio24_Preview_Endpoints
 
         $token = bin2hex(random_bytes(32));
 
-        $preview_url = get_option('frontend_url_field') . "/" . $token;
+        $preview_url = get_option('studio24_preview_frontend_url_field') . "/" . $token;
 
         $preview_url_with_args = add_query_arg(
             [

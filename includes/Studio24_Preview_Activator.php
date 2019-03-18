@@ -43,7 +43,7 @@ class Studio24_Preview_Activator
         global $wpdb;
         $time              = time();
         $tokens            = $wpdb->get_results("select * from {$wpdb->prefix}studio24_preview_tokens");
-        $cron_setting_time = get_option("frontend_cron_field");
+        $cron_setting_time = get_option("studio24_preview_frontend_cron_field");
         $cron_setting_time = $cron_setting_time && $cron_setting_time > 0 ? $cron_setting_time : 1;
         foreach ( $tokens as $token ) {
             $diff = date("H", $time - $token->creation_time);
@@ -62,6 +62,12 @@ class Studio24_Preview_Activator
         global $wpdb;
         $query = "DROP TABLE IF EXISTS " . $wpdb->prefix . "studio24_preview_tokens;";
         $wpdb->query($query);
+	    $plugin_options = $wpdb->get_results( "SELECT option_name FROM $wpdb->options WHERE option_name LIKE 'studio24_preview_%'" );
+
+	    foreach( $plugin_options as $option ) {
+		    delete_option( $option->option_name );
+	    }
+	    
         // find out when the last event was scheduled
         $timestamp = wp_next_scheduled('cleanup_tokens_in_db');
         // unschedule previous event if any

@@ -84,31 +84,31 @@ class Studio24_Preview_Settings
     public function setup_fields()
     {
         add_settings_field(
-            'frontend_url_field', 'URL', array(
+            'studio24_preview_frontend_url_field', 'URL', array(
             $this,
             'url_field_callback'
             ), 'studio24_preview', 'frontend_url_section' 
         );
         add_settings_field(
-            'frontend_cron_field', 'CRON', array(
+            'studio24_preview_frontend_cron_field', 'CRON', array(
             $this,
             'cron_field_callback'
             ), 'studio24_preview', 'frontend_cron_section' 
         );
-        register_setting('studio24_preview', 'frontend_url_field');
-        register_setting('studio24_preview', 'frontend_cron_field');
+        register_setting('studio24_preview', 'studio24_preview_frontend_url_field');
+        register_setting('studio24_preview', 'studio24_preview_frontend_cron_field');
     }
 
     public function url_field_callback( $arguments )
     {
-        echo '<input name="frontend_url_field" id="frontend_url_field" type="url" value="' . get_option('frontend_url_field') . '" />';
+        echo '<input name="studio24_preview_frontend_url_field" id="studio24_preview_frontend_url_field" type="url" value="' . get_option('studio24_preview_frontend_url_field') . '" />';
     }
 
     public function cron_field_callback( $arguments )
     {
-        $cron_field = get_option('frontend_cron_field');
+        $cron_field = get_option('studio24_preview_frontend_cron_field');
         $value      = $cron_field && $cron_field > 0 ? $cron_field : 1;
-        echo '<input name="frontend_cron_field" id="frontend_cron_field" min=1 type="number" value="' . $value . '" />';
+        echo '<input name="studio24_preview_frontend_cron_field" id="studio24_preview_frontend_cron_field" min=1 type="number" value="' . $value . '" />';
     }
 
     public static function getInstance()

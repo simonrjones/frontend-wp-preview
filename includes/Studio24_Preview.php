@@ -93,7 +93,7 @@ if (! class_exists("Studio24_Preview") ) {
                 return;
             }
 
-            $fontend_url = get_option('frontend_url_field');
+            $fontend_url = get_option('studio24_preview_frontend_url_field');
             $class       = 'notice is-dismissible';
             $message     = '';
 
@@ -149,7 +149,7 @@ if (! class_exists("Studio24_Preview") ) {
          */
         function headless_preview_options_box()
         {
-            $front_end_url = get_option("frontend_url_field");
+            $front_end_url = get_option("studio24_preview_frontend_url_field");
 
             $html = '<div id="major-publishing-actions" style="overflow:hidden; text-align: center">';
             $html .= '<div id="publishing-action">';
