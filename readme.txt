@@ -1,13 +1,13 @@
 # Studio 24 - headless preview
 ## What does this plugin do
 
-This plugin will make it possible to preview posts/custom posts you 
+This plugin will make it possible to preview posts/custom posts you
 are working on, on your decoupled frontend website, by exposing revisions. Which you can then fetch on your frontend with the provided token.
 
 ## Activation
 
 When you activate the plugin, a table will be generated:
-	 
+
 	 <wpprefix>_studio24_preview_tokens
 
 The table consists of 3 columns:
@@ -43,20 +43,20 @@ This plugin adds an extra link to the post quick actions. The link is labeled *'
 ##### Classic editor
 *<small>/wp-admin/post.php?post=?&action=edit | /wp-admin/post-new.php</small>*
 
-This plugin adds an extra meta box on the right side. It's labeled *'Headless preview'*. 
+This plugin adds an extra meta box on the right side. It's labeled *'Headless preview'*.
 Here you can find the button to open the new page and a settings overview.
 
 ##### Gutenberg editor
 *<small>/wp-admin/post.php?post=?&action=edit | /wp-admin/post-new.php</small>*
 
-This plugin adds a sidebar to the editor. On the right side there will be a button to toggle this sidebar. 
+This plugin adds a sidebar to the editor. On the right side there will be a button to toggle this sidebar.
 It's labeled *'Headless preview'*. Here you can find the button to open the new page and a settings overview.
 
 In all cases:
 If you click the link/button, a new page *<small>(the provided url)</small>* will open.
 
 ## Requirements
-A front-end page that handles the token and requests the data. 
+A front-end page that handles the token and requests the data.
 It is the **responsibility of the user** to provide the necessary functionality on the front-end site.
 
 ## Fetching the preview
@@ -65,7 +65,7 @@ It is the **responsibility of the user** to provide the necessary functionality 
 
 A new route will be available in the REST API.
 You can access the data through the following url.
-    
+
     wp-json/preview-studio-24/v1/revision/{token_id}
 
 Once you click on 'Headless Preview' you will automatically be redirected to the frontend with get parameters.
@@ -94,7 +94,7 @@ The following responses can be returned when you call the api:
 ```
 - You already used the token
 - The token is corrupted or non existing
- 
+
 ```json
 {
     "code": "rest_no_route",
