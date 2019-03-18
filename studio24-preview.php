@@ -43,111 +43,34 @@ function add_plugin_page_settings_link( $links ) {
 	return $links;
 }
 
-add_action( 'in_admin_header', 'change_preview_link' );
+//add_action( 'in_admin_header', 'change_preview_link' );
 
 add_filter( 'preview_post_link', 'change_preview_link' );
 
-
-function updatePreviewToken() {
-	change_preview_link();
-}
-
 function change_preview_link() {
-	global $wpdb;
-	global $post;
 	global $pagenow;
-	global $headless_preview_link;
+
 	$inOverview = ( in_array( $pagenow, array( "edit.php" ) ) ) ? 1 : 0;
 
 	$inEditor = ( ( isset( $_GET['action'] ) && $_GET['action'] === 'edit' ) || in_array( $pagenow, array(
 			'post.php',
 			'post-new.php'
 		) ) ) ? 1 : 0;
-	global $current_screen;
-//	$isGutenbergEditor = ( ( method_exists( $current_screen, 'is_block_editor' ) && $current_screen->is_block_editor() )
-//	                       || ( function_exists( 'is_gutenberg_page' ) ) && is_gutenberg_page() ) ? 1 : 0;
 
 	if ( ! $inOverview && ! $inEditor ) {
 		return;
 	}
 
-//	$token = bin2hex( random_bytes( 32 ) );
-//
-//	$url_from_option       = get_option( 'frontend_url_field' );
-//	$headless_preview_link = "{$url_from_option}/{$token}";
-//
-//	$post_id = get_the_ID();
-//
-//	$wpdb->insert( $wpdb->prefix . "studio24_preview_tokens", array(
-//		"token_id"       => $token,
-//		"parent_post_id" => $post_id,
-//		"creation_time"  => time()
-//	) );
-
-//	$args = array(
-//		"post_type" => $post->post_type
-//	);
-//
-//	$headless_preview_link = add_query_arg( $args, $headless_preview_link );
-
-	if ( $inEditor ) {
-	    // other hook adds a metabox
-		if ( $isGutenbergEditor ) {
-			// create sidebar
-            // maybe not...
-			?>
-            <script>
-                //console.log("Updating the token || creating preview sidebar");
-                //addPreviewSidebar("<?php //echo esc_url( admin_url( '/admin.php?page=studio24_preview' ) ); ?>//", "<?php //echo $headless_preview_link; ?>//", "<?php //echo $url_from_option; ?>//");
-            </script>
-			<?php
-		} else {
-			// adding a new button for the normal editor happens in a different hook.
-		}
-	} elseif ( $inOverview ) {
-		// add link to list
+	if ( $inOverview ) {
 		add_filter( 'post_row_actions', function ( $actions, $post ) {
 			if ( get_post_status( $post ) != 'publish' ) {
 				$actions['headless-preview'] = "<a target=\"_blank\"  href='" . get_new_token_url() . "'>Headless preview</a>";
 			}
+
 			return $actions;
 		}, 10, 2 );
 	}
 }
-
-add_action( "save_post", "updatePreviewToken" );
-
-
-function preview_sidebar_plugin_register() {
-	wp_register_script(
-		'preview-sidebar-js',
-		plugins_url( 'preview-sidebar.js', __FILE__ ),
-		array(
-			'wp-plugins',
-			'wp-edit-post',
-			'wp-element',
-			'wp-components'
-		)
-	);
-	wp_register_style(
-		'preview-sidebar-css',
-		plugins_url( 'preview-sidebar.css', __FILE__ )
-	);
-}
-
-add_action( 'init', 'preview_sidebar_plugin_register' );
-
-function preview_sidebar_plugin_style_enqueue() {
-	wp_enqueue_style( 'preview-sidebar-css' );
-}
-
-add_action( 'enqueue_block_assets', 'preview_sidebar_plugin_style_enqueue' );
-
-function preview_sidebar_plugin_script_enqueue() {
-	wp_enqueue_script( 'preview-sidebar-js' );
-}
-
-add_action( 'enqueue_block_editor_assets', 'preview_sidebar_plugin_script_enqueue' );
 
 // register the meta box
 add_action( 'add_meta_boxes', 'my_custom_field_checkboxes' );
@@ -156,7 +79,7 @@ function my_custom_field_checkboxes() {
 		'headless-preview-options-box',
 		'Headless preview',
 		'headless_preview_options_box',
-		'',         // all
+		'',         // all post types
 		'side',
 		'high'
 	);
@@ -164,7 +87,6 @@ function my_custom_field_checkboxes() {
 
 // display the metabox
 function headless_preview_options_box() {
-
 	$base_url      = get_bloginfo( 'url' );
 	$front_end_url = get_option( "frontend_url_field" );
 
@@ -172,7 +94,7 @@ function headless_preview_options_box() {
 	$html .= '<div id="publishing-action">';
 	$html .= '<a class="preview button" target="_blank" href="';
 	$html .= get_new_token_url();
-	$html .= 'id="headless-preview">Headless preview<span class="screen-reader-text">(opens in a new tab)</span></a>';
+	$html .= '" id="headless-preview">Headless preview<span class="screen-reader-text">(opens in a new tab)</span></a>';
 	$html .= '</div></div>';
 	$html .= '<div class="preview-plugin-sidebar-info-content">';
 	$html .= '<p class="preview-sidebar-header">Settings</p>';

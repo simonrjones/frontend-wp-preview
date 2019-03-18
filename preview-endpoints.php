@@ -42,20 +42,35 @@ function get_latest_revision( $request ) {
 function generate_token_and_redirect( $request ) {
 	global $wpdb;
 
-	$post_id   = $request['post_id'];
-	$post_type = $request['post_type'];
+	$post_id            = $request['post_id'];
+	$expected_post_type = $request['post_type'];
+
+	$actual_post_type = get_post_type( $post_id );
+
+	if ( ! $actual_post_type ) {
+		return new WP_Error( 'post_not_found', 'Invalid post id', array( 'status' => 404, 'text' => 'Not Found' ) );
+	}
+	if ( $actual_post_type !== $expected_post_type ) {
+		return new WP_Error( 'post_type_not_matching', 'Invalid post type', array( 'status' => 400, 'text' => 'Bad Request' ) );
+	}
+
 	$token = bin2hex( random_bytes( 32 ) );
 
 	$preview_url = get_option( 'frontend_url_field' ) . "/" . $token;
 
-	$preview_url_with_args = add_query_arg( [ 'post_type' => $post_type ], $preview_url );
+	$preview_url_with_args = add_query_arg(
+		[
+			'post_type' => $actual_post_type
+		],
+		$preview_url
+	);
 
 	$wpdb->insert( $wpdb->prefix . "studio24_preview_tokens", array(
 		"token_id"       => $token,
 		"parent_post_id" => $post_id,
 		"creation_time"  => time()
 	) );
-	header("Location: " . $preview_url_with_args);
+	header( "Location: " . $preview_url_with_args );
 	exit();
 }
 

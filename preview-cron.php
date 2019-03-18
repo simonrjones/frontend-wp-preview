@@ -28,12 +28,11 @@ function clean_up_tokens()
     global $wpdb;
     $time = time();
     $tokens = $wpdb->get_results("select * from {$wpdb->prefix}studio24_preview_tokens");
+	$cron_setting_time = get_option("frontend_cron_field");
+	$cron_setting_time = $cron_setting_time && $cron_setting_time > 0 ? $cron_setting_time : 1;
     foreach ($tokens as $token) {
         $diff = date("H", $time - $token->creation_time);
-        $cron_setting_time = get_option("frontend_cron_field");
-        $cron_setting_time = $cron_setting_time && $cron_setting_time > 0 ? $cron_setting_time : 1;
-        error_log("this is the cron setting time: {$cron_setting_time}... ");
-        if ($diff >= 1) { // todo setting, now 1 hour
+        if ($diff >= $cron_setting_time) {
             $wpdb->delete("{$wpdb->prefix}studio24_preview_tokens", array(
                 "token_id" => $token->token_id
             ));
