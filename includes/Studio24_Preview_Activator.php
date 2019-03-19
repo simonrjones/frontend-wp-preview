@@ -45,7 +45,7 @@ class Studio24_Preview_Activator
         $cron_setting_time = get_option("studio24_preview_frontend_cron_field");
         $cron_setting_time = $cron_setting_time && $cron_setting_time > 0 ? $cron_setting_time : 1;
         foreach ( $tokens as $token ) {
-            $diff = date("H", $time - $token->creation_time);
+            $diff = date("H", $time - strtotime($token->creation_time));
             if ($diff >= $cron_setting_time ) {
                 $wpdb->delete(
                     "{$wpdb->prefix}studio24_preview_tokens", array(

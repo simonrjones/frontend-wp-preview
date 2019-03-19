@@ -121,7 +121,7 @@ class Studio24_Preview_Endpoints
             $wpdb->prefix . "studio24_preview_tokens", array(
             "token_id"       => $token,
             "parent_post_id" => $post_id,
-            "creation_time"  => time()
+            "creation_time"  => date('m/d/Y H:i:s', time())
             )
         );
         header("Location: " . $preview_url_with_args);
