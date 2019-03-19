@@ -18,7 +18,6 @@ class Studio24_Preview_Activator
 
     public function setup_preview_db()
     {
-        error_log("Setup preview db cron");
         global $wpdb;
         global $charset_collate;
         $query = "CREATE TABLE IF NOT EXISTS " . $wpdb->prefix . "studio24_preview_tokens (

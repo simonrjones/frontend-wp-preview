@@ -49,7 +49,6 @@ if (! class_exists("Studio24_Preview") ) {
          */
         public function activate()
         {
-            error_log("Base name in class file: " . plugin_basename(__FILE__));
             $this->activator->activate();
         }
 
