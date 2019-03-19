@@ -17,11 +17,11 @@ class Studio24_Preview_Endpoints
                 register_rest_route(
                     'preview-studio-24/v1', '/new', array(
                     'methods'  => 'GET',
-                    'callback' => array($this, 'generate_token_and_redirect'),
+                    'callback' => array( $this, 'generate_token_and_redirect' ),
                     'args'     => [ 'post_id', 'post_type' ]
-                    ) 
+                    )
                 );
-            } 
+            }
         );
 
         add_action(
@@ -29,11 +29,11 @@ class Studio24_Preview_Endpoints
                 register_rest_route(
                     'preview-studio-24/v1', '/revision/(?P<token>[\d\w]+)', array(
                     'methods'  => 'GET',
-                    'callback' => array($this, 'get_latest_revision'),
+                    'callback' => array( $this, 'get_latest_revision' ),
                     'args'     => [ 'token' ]
-                    ) 
+                    )
                 );
-            } 
+            }
         );
     }
 
@@ -46,7 +46,7 @@ class Studio24_Preview_Endpoints
         $parent_post_id = $wpdb->get_results(
             $wpdb->prepare(
                 "select parent_post_id from {$wpdb->prefix}studio24_preview_tokens where token_id = %s", $token
-            ), OBJECT 
+            ), OBJECT
         );
 
         if (count($parent_post_id) === 0 ) {
@@ -56,7 +56,7 @@ class Studio24_Preview_Endpoints
             $wpdb->delete(
                 "{$wpdb->prefix}studio24_preview_tokens", array(
                 "token_id" => $token
-                ) 
+                )
             );
         }
 
@@ -65,7 +65,7 @@ class Studio24_Preview_Endpoints
         $revisions = $wpdb->get_results(
             $wpdb->prepare(
                 "select ID from {$wpdb->prefix}posts where post_parent = %d and post_type = 'revision'", intval($parent_post_id)
-            ), OBJECT 
+            ), OBJECT
         );
 
         if (count($revisions) === 0 ) {
@@ -100,13 +100,15 @@ class Studio24_Preview_Endpoints
                 'post_type_not_matching', 'Invalid post type', array(
                 'status' => 400,
                 'text'   => 'Bad Request'
-                ) 
+                )
             );
         }
 
         $token = bin2hex(random_bytes(32));
 
-        $preview_url = get_option('studio24_preview_frontend_url_field') . "/" . $token; // todo check if trailing slash is in frontend_url
+        $frontend_url_option = get_option('studio24_preview_frontend_url_field');
+        $has_trailing_slash = preg_match('/(\/$)/', $frontend_url_option);
+        $preview_url = $frontend_url_option . ($has_trailing_slash ? "" : "/") . $token;
 
         $preview_url_with_args = add_query_arg(
             [
@@ -120,7 +122,7 @@ class Studio24_Preview_Endpoints
             "token_id"       => $token,
             "parent_post_id" => $post_id,
             "creation_time"  => time()
-            ) 
+            )
         );
         header("Location: " . $preview_url_with_args);
         exit();

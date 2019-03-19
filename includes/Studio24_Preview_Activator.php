@@ -62,12 +62,12 @@ class Studio24_Preview_Activator
         global $wpdb;
         $query = "DROP TABLE IF EXISTS " . $wpdb->prefix . "studio24_preview_tokens;";
         $wpdb->query($query);
-	    $plugin_options = $wpdb->get_results( "SELECT option_name FROM $wpdb->options WHERE option_name LIKE 'studio24_preview_%'" );
+        $plugin_options = $wpdb->get_results("SELECT option_name FROM $wpdb->options WHERE option_name LIKE 'studio24_preview_%'");
 
-	    foreach( $plugin_options as $option ) {
-		    delete_option( $option->option_name );
-	    }
-	    
+        foreach( $plugin_options as $option ) {
+            delete_option($option->option_name);
+        }
+        
         // find out when the last event was scheduled
         $timestamp = wp_next_scheduled('cleanup_tokens_in_db');
         // unschedule previous event if any
