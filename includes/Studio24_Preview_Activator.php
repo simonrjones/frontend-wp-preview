@@ -5,10 +5,14 @@ class Studio24_Preview_Activator
 
     static $instance = false;
 
-    public function activate()
+    private function __construct() {
+	    add_action("cleanup_tokens_in_db", array($this, "clean_up_tokens"));
+    }
+
+	public function activate()
     {
         $this->setup_preview_db();
-        $this->setup_preview_cron();
+	    $this->setup_preview_cron();
     }
 
     public function deactivate()
@@ -40,12 +44,16 @@ class Studio24_Preview_Activator
     public function clean_up_tokens()
     {
         global $wpdb;
+        error_log("in cron clean up tokens");
         $time              = time();
         $tokens            = $wpdb->get_results("select * from {$wpdb->prefix}studio24_preview_tokens");
         $cron_setting_time = get_option("studio24_preview_frontend_cron_field");
         $cron_setting_time = $cron_setting_time && $cron_setting_time > 0 ? $cron_setting_time : 1;
         foreach ( $tokens as $token ) {
             $diff = date("H", $time - strtotime($token->creation_time));
+	        error_log($time . " --> ". strtotime($time));
+	        error_log(strtotime($token->creation_time) . " --> " . $token->creation_time);
+	        error_log("diff --> " . $diff);
             if ($diff >= $cron_setting_time ) {
                 $wpdb->delete(
                     "{$wpdb->prefix}studio24_preview_tokens", array(
