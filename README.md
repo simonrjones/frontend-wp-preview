@@ -148,7 +148,3 @@ The following responses can be returned when you call the api:
 - You successfully fetched the latest revision
 
 *Note: If the post has multiple revisions. note that only the last revision will be returned.*
-
-## Known issues
-- Unable to re-enable sidebar when unpinned (Gutenberg)
-- Token doesn't regenerate when clicking the link
